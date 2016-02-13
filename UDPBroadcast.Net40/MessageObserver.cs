@@ -6,18 +6,24 @@
 
 namespace UDPBroadcast
 {
-  public class MessageObserver : IObserver<IMessage>
+  public class MessageObserver<T> : IMessageObserver<T>
   {
-    public MessageObserver(Guid brokerID)
+    /// <exception cref="ArgumentNullException"><paramref name="broker" /> is <see langword="null" />.</exception>
+    public MessageObserver(Broker broker)
     {
-      this.BrokerID = brokerID;
+      if (broker == null)
+      {
+        throw new ArgumentNullException(nameof(broker));
+      }
+
+      this.Broker = broker;
       this.InterceptRemoteMessagesOnly = true;
     }
 
-    private Guid BrokerID { get; }
+    private Broker Broker { get; }
     public Action InterceptCompleted { get; set; }
     public Action<Exception> InterceptOnError { get; set; }
-    public Action<IMessage> InterceptOnNext { get; set; }
+    public Action<T> InterceptOnNext { get; set; }
     public bool InterceptRemoteMessagesOnly { get; set; }
 
     /// <exception cref="Exception">A delegate callback throws an exception.</exception>
@@ -31,13 +37,16 @@ namespace UDPBroadcast
 
       if (this.InterceptRemoteMessagesOnly)
       {
-        if (this.BrokerID == value.BrokerID)
+        if (this.Broker.ID == value.BrokerID)
         {
           return;
         }
       }
 
-      this.InterceptOnNext?.Invoke(value);
+      var obj = value.GetInstance();
+      var instance = (T)obj;
+
+      this.InterceptOnNext?.Invoke(instance);
     }
 
     /// <exception cref="Exception">A delegate callback throws an exception.</exception>
@@ -50,6 +59,11 @@ namespace UDPBroadcast
     public void OnCompleted()
     {
       this.InterceptCompleted?.Invoke();
+    }
+
+    public Type GetBodyType()
+    {
+      return typeof (T);
     }
   }
 }

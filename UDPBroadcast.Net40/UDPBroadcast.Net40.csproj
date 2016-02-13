@@ -80,6 +80,7 @@
   <ItemGroup>
     <Compile Include="Broker.cs" />
     <Compile Include="IMessage.cs" />
+    <Compile Include="IMessageObserver.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="MessageObserver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

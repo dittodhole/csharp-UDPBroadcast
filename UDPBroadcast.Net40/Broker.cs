@@ -27,11 +27,11 @@ namespace UDPBroadcast
       this.Port = port;
       this.ID = Guid.NewGuid();
 
-      this.TypeBasedObservers = new Dictionary<string, ICollection<IObserver<IMessage>>>();
+      this.TypeBasedObservers = new Dictionary<string, ICollection<IMessageObserver>>();
       this.CancellationTokenSource = new CancellationTokenSource();
 
       this.PathFactory = type => type.FullName;
-      this.ObserverFactory = () => new LinkedList<IObserver<IMessage>>();
+      this.ObserverFactory = () => new LinkedList<IMessageObserver>();
       this.DeserializeMessageFn = buffer =>
                                   {
                                     // ReSharper disable ExceptionNotDocumentedOptional
@@ -58,44 +58,20 @@ namespace UDPBroadcast
                                 throw new ArgumentNullException(nameof(obj));
                               }
 
-                              var type = obj.GetType();
+                              var bodyType = obj.GetType();
                               // ReSharper disable EventExceptionNotDocumented
-                              var path = this.PathFactory.Invoke(type);
-                              // ReSharper restore EventExceptionNotDocumented
-                              // ReSharper disable EventExceptionNotDocumented
-                              var body = this.SerializeBodyFn.Invoke(obj);
+                              var path = this.PathFactory.Invoke(bodyType);
                               // ReSharper restore EventExceptionNotDocumented
                               var message = new Message
                                             {
                                               BrokerID = this.ID,
-                                              Body = body,
                                               Path = path
                                             };
+                              message.SetInstance(obj);
 
                               return message;
                               // ReSharper restore ExceptionNotDocumentedOptional
                             };
-      this.SerializeBodyFn = obj =>
-                             {
-                               // ReSharper disable ExceptionNotDocumentedOptional
-                               if (obj == null)
-                               {
-                                 throw new ArgumentNullException(nameof(obj));
-                               }
-
-                               byte[] buffer;
-
-                               var binaryFormatter = new BinaryFormatter();
-                               using (var memoryStream = new MemoryStream())
-                               {
-                                 binaryFormatter.Serialize(memoryStream,
-                                                           obj);
-                                 buffer = memoryStream.ToArray();
-                               }
-
-                               return buffer;
-                               // ReSharper restore ExceptionNotDocumentedOptional
-                             };
       this.SerializeMessageFn = message =>
                                 {
                                   // ReSharper disable ExceptionNotDocumentedOptional
@@ -118,37 +94,17 @@ namespace UDPBroadcast
                                   return buffer;
                                   // ReSharper restore ExceptionNotDocumentedOptional
                                 };
-      this.DeserializeBodyFn = buffer =>
-                               {
-                                 // ReSharper disable ExceptionNotDocumentedOptional
-                                 if (buffer == null)
-                                 {
-                                   throw new ArgumentNullException(nameof(buffer));
-                                 }
-
-                                 object obj;
-                                 using (var memoryStream = new MemoryStream(buffer))
-                                 {
-                                   var binaryFormatter = new BinaryFormatter();
-                                   obj = binaryFormatter.Deserialize(memoryStream);
-                                 }
-
-                                 return obj;
-                                 // ReSharper restore ExceptionNotDocumentedOptional
-                               };
     }
 
     private CancellationTokenSource CancellationTokenSource { get; }
-    public Func<byte[], object> DeserializeBodyFn { get; set; }
     public Func<byte[], IMessage> DeserializeMessageFn { get; set; }
     public Guid ID { get; }
     public Func<object, IMessage> MessageFactory { get; set; }
-    public Func<ICollection<IObserver<IMessage>>> ObserverFactory { get; set; }
+    public Func<ICollection<IMessageObserver>> ObserverFactory { get; set; }
     public Func<Type, string> PathFactory { get; set; }
     private int Port { get; }
-    public Func<object, byte[]> SerializeBodyFn { get; set; }
     public Func<IMessage, byte[]> SerializeMessageFn { get; set; }
-    private IDictionary<string, ICollection<IObserver<IMessage>>> TypeBasedObservers { get; }
+    private IDictionary<string, ICollection<IMessageObserver>> TypeBasedObservers { get; }
 
     public void Dispose()
     {
@@ -267,7 +223,7 @@ namespace UDPBroadcast
             continue;
           }
 
-          ICollection<IObserver<IMessage>> observers;
+          ICollection<IMessageObserver> observers;
           if (!this.TypeBasedObservers.TryGetValue(message.Path,
                                                    out observers))
           {
@@ -290,7 +246,7 @@ namespace UDPBroadcast
               {
                 LogTo.ErrorException("failed to invoke {0} for message at {1}", // Not L10N
                                      exError,
-                                     nameof(observer.OnError),
+                                     nameof(IObserver<IMessage>.OnError),
                                      message.Path);
               }
 
@@ -318,7 +274,7 @@ namespace UDPBroadcast
 #if NET45 || NET46
     /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
 #endif
-    public void Publish<T>(T instance)
+    public void Publish(object obj)
     {
       var messageFactory = this.MessageFactory;
       if (messageFactory == null)
@@ -326,7 +282,7 @@ namespace UDPBroadcast
         throw new InvalidOperationException($"{nameof(this.MessageFactory)} is null");
       }
 
-      var message = messageFactory.Invoke(instance);
+      var message = messageFactory.Invoke(obj);
 
       this.Publish(message);
     }
@@ -387,7 +343,7 @@ namespace UDPBroadcast
     /// <exception cref="InvalidOperationException">If <see cref="PathFactory" /> is null.</exception>
     /// <exception cref="InvalidOperationException">If <see cref="ObserverFactory" /> is null.</exception>
     /// <exception cref="InvalidOperationException">If the observer collection is read-only.</exception>
-    public void Subscribe<T>(IObserver<IMessage> messageObserver)
+    public void Subscribe(IMessageObserver messageObserver)
     {
       var pathFactory = this.PathFactory;
       if (pathFactory == null)
@@ -395,14 +351,14 @@ namespace UDPBroadcast
         throw new InvalidOperationException($"{nameof(this.PathFactory)} is null");
       }
 
-      var type = typeof (T);
-      var path = pathFactory.Invoke(type);
+      var bodyType = messageObserver.GetBodyType();
+      var path = pathFactory.Invoke(bodyType);
       if (path == null)
       {
-        throw new InvalidOperationException($"Path for {type} was null");
+        throw new InvalidOperationException($"Path for {bodyType} was null");
       }
 
-      ICollection<IObserver<IMessage>> observers;
+      ICollection<IMessageObserver> observers;
       // ReSharper disable ExceptionNotDocumentedOptional
       if (!this.TypeBasedObservers.TryGetValue(path,
                                                out observers))
@@ -431,29 +387,6 @@ namespace UDPBroadcast
       // ReSharper disable ExceptionNotDocumentedOptional
       observers.Add(messageObserver);
       // ReSharper restore ExceptionNotDocumentedOptional
-    }
-
-    /// <exception cref="ArgumentNullException"><paramref name="message" /> is <see langword="null" />.</exception>
-    /// <exception cref="Exception">A delegate callback throws an exception.</exception>
-    /// <exception cref="InvalidOperationException">If <see cref="DeserializeBodyFn" /> is null.</exception>
-    public T GetInstance<T>(IMessage message)
-    {
-      if (message == null)
-      {
-        throw new ArgumentNullException(nameof(message));
-      }
-
-      var body = message.Body;
-      var deserializeBodyFn = this.DeserializeBodyFn;
-      if (deserializeBodyFn == null)
-      {
-        throw new InvalidOperationException($"{nameof(this.DeserializeBodyFn)} is null");
-      }
-
-      var obj = deserializeBodyFn.Invoke(body);
-      var instance = (T) obj;
-
-      return instance;
     }
   }
 }

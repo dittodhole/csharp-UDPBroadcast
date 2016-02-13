@@ -60,6 +60,9 @@
     <Compile Include="..\UDPBroadcast.Net40\IMessage.cs">
       <Link>IMessage.cs</Link>
     </Compile>
+    <Compile Include="..\UDPBroadcast.Net40\IMessageObserver.cs">
+      <Link>IMessageObserver.cs</Link>
+    </Compile>
     <Compile Include="..\UDPBroadcast.Net40\Message.cs">
       <Link>Message.cs</Link>
     </Compile>
