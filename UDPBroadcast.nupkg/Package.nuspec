@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>UDPBroadcast</id>
-    <version>2.0.0</version>
+    <version>3.0.0</version>
     <title>UDPBroadcast</title>
     <authors>Andreas Niedermair</authors>
     <description>
