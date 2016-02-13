@@ -8,19 +8,13 @@ namespace UDPBroadcast
 {
   public class MessageObserver<T> : IMessageObserver<T>
   {
-    /// <exception cref="ArgumentNullException"><paramref name="broker" /> is <see langword="null" />.</exception>
-    public MessageObserver(Broker broker)
+    public MessageObserver(Guid brokerID)
     {
-      if (broker == null)
-      {
-        throw new ArgumentNullException(nameof(broker));
-      }
-
-      this.Broker = broker;
+      this.BrokerID = brokerID;
       this.InterceptRemoteMessagesOnly = true;
     }
 
-    private Broker Broker { get; }
+    private Guid BrokerID { get; }
     public Action InterceptCompleted { get; set; }
     public Action<Exception> InterceptOnError { get; set; }
     public Action<T> InterceptOnNext { get; set; }
@@ -37,7 +31,7 @@ namespace UDPBroadcast
 
       if (this.InterceptRemoteMessagesOnly)
       {
-        if (this.Broker.ID == value.BrokerID)
+        if (this.BrokerID == value.BrokerID)
         {
           return;
         }

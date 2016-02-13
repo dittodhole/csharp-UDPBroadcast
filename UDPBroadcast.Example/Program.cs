@@ -7,7 +7,7 @@ namespace UDPBroadcast.Example
     static void Main(string[] args)
     {
       var broker = new Broker(1337);
-      var messageObserver = new MessageObserver<Foo>(broker)
+      var messageObserver = new MessageObserver<Foo>(broker.ID)
                             {
                               InterceptRemoteMessagesOnly = false,
                               InterceptOnNext = foo =>
