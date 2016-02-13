@@ -142,13 +142,13 @@ namespace UDPBroadcast
 
     // ReSharper restore UnusedParameter.Local
 
-    private void Receive()
+    private void Receive(CancellationToken cancellationToken)
     {
       var ipEndPoint = new IPEndPoint(IPAddress.Any,
                                       this.Port);
       using (var udpClient = new UdpClient(this.Port))
       {
-        while (!this.CancellationTokenSource.IsCancellationRequested)
+        while (!cancellationToken.IsCancellationRequested)
         {
           byte[] buffer;
           try
