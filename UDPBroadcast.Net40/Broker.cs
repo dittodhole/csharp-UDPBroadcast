@@ -138,7 +138,9 @@ namespace UDPBroadcast
       // ReSharper restore ExceptionNotDocumentedOptional
     }
 
+#if NET40 || NET46
     /// <exception cref="ObjectDisposedException">The token source has been disposed.</exception>
+#endif
     public void Start()
     {
       // ReSharper disable ExceptionNotDocumented
@@ -293,6 +295,9 @@ namespace UDPBroadcast
     /// </exception>
     /// <exception cref="InvalidOperationException">If <see cref="MessageFactory" /> is null.</exception>
     /// <exception cref="InvalidOperationException">If <see cref="SerializeMessageFn" /> is null.</exception>
+#if NET45 || NET46
+    /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
+#endif
     public void Publish<T>(T instance)
     {
       var messageFactory = this.MessageFactory;
@@ -317,6 +322,9 @@ namespace UDPBroadcast
     ///   <see cref="F:System.Net.IPEndPoint.MaxPort" />.
     /// </exception>
     /// <exception cref="InvalidOperationException">If <see cref="SerializeMessageFn" /> is null.</exception>
+#if NET45 || NET46
+    /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
+#endif
     public void Publish(IMessage message)
     {
       var serializeMessageFn = this.SerializeMessageFn;
