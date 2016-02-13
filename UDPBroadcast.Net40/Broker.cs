@@ -51,27 +51,7 @@ namespace UDPBroadcast
                                     }
                                     // ReSharper restore ExceptionNotDocumentedOptional
                                   };
-      this.MessageFactory = obj =>
-                            {
-                              // ReSharper disable ExceptionNotDocumentedOptional
-                              if (obj == null)
-                              {
-                                throw new ArgumentNullException(nameof(obj));
-                              }
-
-                              var bodyType = obj.GetType();
-                              // ReSharper disable EventExceptionNotDocumented
-                              var path = this.PathFactory.Invoke(bodyType);
-                              // ReSharper restore EventExceptionNotDocumented
-                              var message = new Message
-                                            {
-                                              BrokerID = this.ID,
-                                              Path = path
-                                            };
-
-                              return message;
-                              // ReSharper restore ExceptionNotDocumentedOptional
-                            };
+      this.MessageFactory = () => new Message();
       this.SerializeMessageFn = message =>
                                 {
                                   // ReSharper disable ExceptionNotDocumentedOptional
@@ -99,7 +79,7 @@ namespace UDPBroadcast
     private CancellationTokenSource CancellationTokenSource { get; }
     public Func<byte[], IMessage> DeserializeMessageFn { get; set; }
     public Guid ID { get; }
-    public Func<object, IMessage> MessageFactory { get; set; }
+    public Func<IMessage> MessageFactory { get; set; }
     public Func<ICollection<IMessageObserver>> ObserverFactory { get; set; }
     public Func<Type, string> PathFactory { get; set; }
     private int Port { get; }
@@ -270,20 +250,35 @@ namespace UDPBroadcast
     ///   <see cref="F:System.Net.IPEndPoint.MaxPort" />.
     /// </exception>
     /// <exception cref="InvalidOperationException">If <see cref="MessageFactory" /> is null.</exception>
-    /// <exception cref="InvalidOperationException">If <see cref="SerializeMessageFn" /> is null.</exception>
-#if NET45 || NET46
-    /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
-#endif
+    /// <exception cref="InvalidOperationException">If <see cref="PathFactory" /> is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null" />.</exception>
     public void Publish(object obj)
     {
+      if (obj == null)
+      {
+        throw new ArgumentNullException(nameof(obj));
+      }
+
       var messageFactory = this.MessageFactory;
       if (messageFactory == null)
       {
         throw new InvalidOperationException($"{nameof(this.MessageFactory)} is null");
       }
 
-      var message = messageFactory.Invoke(obj);
+      var pathFactory = this.PathFactory;
+      if (pathFactory == null)
+      {
+        throw new InvalidOperationException($"{nameof(this.PathFactory)} is null");
+      }
+
+      var bodyType = obj.GetType();
+      var path = pathFactory.Invoke(bodyType);
+
+      var message = messageFactory.Invoke();
+      message.SetBrokerID(this.ID);
       message.SetInstance(obj);
+      message.SetPath(path);
+
       this.Publish(message);
     }
 
@@ -298,11 +293,14 @@ namespace UDPBroadcast
     ///   <see cref="F:System.Net.IPEndPoint.MaxPort" />.
     /// </exception>
     /// <exception cref="InvalidOperationException">If <see cref="SerializeMessageFn" /> is null.</exception>
-#if NET45 || NET46
-    /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
-#endif
+    /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null" />.</exception>
     public void Publish(IMessage message)
     {
+      if (message == null)
+      {
+        throw new ArgumentNullException(nameof(message));
+      }
+
       var serializeMessageFn = this.SerializeMessageFn;
       if (serializeMessageFn == null)
       {
@@ -342,8 +340,14 @@ namespace UDPBroadcast
     /// <exception cref="InvalidOperationException">If <see cref="PathFactory" /> is null.</exception>
     /// <exception cref="InvalidOperationException">If <see cref="ObserverFactory" /> is null.</exception>
     /// <exception cref="InvalidOperationException">If the observer collection is read-only.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="messageObserver"/> is <see langword="null" />.</exception>
     public void Subscribe(IMessageObserver messageObserver)
     {
+      if (messageObserver == null)
+      {
+        throw new ArgumentNullException(nameof(messageObserver));
+      }
+
       var pathFactory = this.PathFactory;
       if (pathFactory == null)
       {

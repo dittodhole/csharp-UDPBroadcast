@@ -74,6 +74,16 @@ namespace UDPBroadcast
       this.Body = body;
     }
 
+    public void SetPath(string path)
+    {
+      this.Path = path;
+    }
+
+    public void SetBrokerID(Guid brokerID)
+    {
+      this.BrokerID = brokerID;
+    }
+
     /// <exception cref="Exception">A delegate callback throws an exception.</exception>
     /// <exception cref="InvalidOperationException">If <see cref="DeserializeBodyFn" /> is null.</exception>
     public object GetInstance()
