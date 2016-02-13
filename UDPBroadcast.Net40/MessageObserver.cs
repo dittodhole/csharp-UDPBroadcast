@@ -38,7 +38,7 @@ namespace UDPBroadcast
       }
 
       var obj = value.GetInstance();
-      var instance = (T)obj;
+      var instance = (T) obj;
 
       this.InterceptOnNext?.Invoke(instance);
     }
