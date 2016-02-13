@@ -139,7 +139,6 @@ namespace UDPBroadcast
 
     private CancellationTokenSource CancellationTokenSource { get; }
     public Func<byte[], IMessage> DeserializMessageFn { get; set; }
-    public Guid ID { get; }
     public Func<byte[], object> DeserializeBodyFn { get; set; }
     public Guid ID { get; }
     public Func<object, IMessage> MessageFactory { get; set; }
