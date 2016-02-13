@@ -17,11 +17,7 @@ namespace UDPBroadcast
 {
   public partial class Broker : IDisposable
   {
-    private const int Started = 1;
-    private const int NotStarted = 0;
-
     private bool _isDisposed;
-    private int _isStarted = Broker.NotStarted;
 
     public Broker(int port)
     {
@@ -97,16 +93,10 @@ namespace UDPBroadcast
 #if NET40 || NET46
     /// <exception cref="ObjectDisposedException">The token source has been disposed.</exception>
 #endif
+    /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
     public void Start()
     {
-      // ReSharper disable ExceptionNotDocumented
-      if (Interlocked.CompareExchange(ref this._isStarted,
-                                      Broker.Started,
-                                      Broker.NotStarted) != Broker.NotStarted)
-      {
-        return;
-      }
-      // ReSharper restore ExceptionNotDocumented
+      this.Stop();
 
       var cancellationToken = this.CancellationTokenSource.Token;
 
@@ -114,6 +104,15 @@ namespace UDPBroadcast
     }
 
     partial void Start(CancellationToken cancellationToken);
+
+#if NET40 || NET46
+    /// <exception cref="ObjectDisposedException">This <see cref="T:System.Threading.CancellationTokenSource" /> has been disposed.</exception>
+#endif
+    /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
+    public void Stop()
+    {
+      this.CancellationTokenSource.Cancel();
+    }
 
     ~Broker()
     {
