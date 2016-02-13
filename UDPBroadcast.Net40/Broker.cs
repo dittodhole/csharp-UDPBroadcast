@@ -252,6 +252,9 @@ namespace UDPBroadcast
     /// <exception cref="InvalidOperationException">If <see cref="MessageFactory" /> is null.</exception>
     /// <exception cref="InvalidOperationException">If <see cref="PathFactory" /> is null.</exception>
     /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null" />.</exception>
+#if NET45 || NET46
+    /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
+#endif
     public void Publish(object obj)
     {
       if (obj == null)
@@ -294,6 +297,9 @@ namespace UDPBroadcast
     /// </exception>
     /// <exception cref="InvalidOperationException">If <see cref="SerializeMessageFn" /> is null.</exception>
     /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null" />.</exception>
+#if NET45 || NET46
+    /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
+#endif
     public void Publish(IMessage message)
     {
       if (message == null)
