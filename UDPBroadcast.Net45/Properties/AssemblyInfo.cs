@@ -5,10 +5,10 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("UDPBroadcast.Net40")]
+[assembly: AssemblyTitle("UDPBroadcast.Net45")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyProduct("UDPBroadcast.Net40")]
+[assembly: AssemblyProduct("UDPBroadcast.Net45")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 
-[assembly: Guid("d88b63de-a902-4eaa-8d39-7314a52ecd28")]
+[assembly: Guid("deb30c3c-6bdd-42dc-a4b5-fe8a5da564e0")]
 
 // Version information for an assembly consists of the following four values:
 //

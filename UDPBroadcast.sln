@@ -5,6 +5,10 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPBroadcast.Net40", "UDPBroadcast.Net40\UDPBroadcast.Net40.csproj", "{D88B63DE-A902-4EAA-8D39-7314A52ECD28}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPBroadcast.Net45", "UDPBroadcast.Net45\UDPBroadcast.Net45.csproj", "{DEB30C3C-6BDD-42DC-A4B5-FE8A5DA564E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPBroadcast.Net46", "UDPBroadcast.Net46\UDPBroadcast.Net46.csproj", "{0DDE5C65-60E2-4B2C-B7CF-B27641E2DFFC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{D88B63DE-A902-4EAA-8D39-7314A52ECD28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D88B63DE-A902-4EAA-8D39-7314A52ECD28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D88B63DE-A902-4EAA-8D39-7314A52ECD28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DEB30C3C-6BDD-42DC-A4B5-FE8A5DA564E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEB30C3C-6BDD-42DC-A4B5-FE8A5DA564E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEB30C3C-6BDD-42DC-A4B5-FE8A5DA564E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEB30C3C-6BDD-42DC-A4B5-FE8A5DA564E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DDE5C65-60E2-4B2C-B7CF-B27641E2DFFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DDE5C65-60E2-4B2C-B7CF-B27641E2DFFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DDE5C65-60E2-4B2C-B7CF-B27641E2DFFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DDE5C65-60E2-4B2C-B7CF-B27641E2DFFC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
