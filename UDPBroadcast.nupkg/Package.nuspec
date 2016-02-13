@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>UDPBroadcast</id>
+    <version>0.0.1</version>
+    <title>UDPBroadcast</title>
+    <authors>Andreas Niedermair</authors>
+    <description>
+      UDPBroadcast aims to provide a simple interface to broadcast messages within the local network over UDP.
+    </description>
+    <projectUrl>https://github.com/dittodhole/csharp-UDPBroadcast</projectUrl>
+    <licenseUrl>https://raw.githubusercontent.com/dittodhole/WTFNMFPLv3/master/LICENSE</licenseUrl>
+    <dependencies>
+      <group targetFramework="net40">
+        <dependency id="Microsoft.Bcl" version="[1.1.10,2)" />
+        <dependency id="Microsoft.Bcl.Async" version="[1.0.168,2)" />
+        <dependency id="Microsoft.Bcl.Build" version="[1.0.14,2)" />
+        <dependency id="Common.Logging" version="[3.3.1,4)" />
+      </group>
+      <group targetFramework="net45">
+        <dependency id="Common.Logging" version="[3.3.1,4)" />
+      </group>
+      <group targetFramework="net46">
+        <dependency id="Common.Logging" version="[3.3.1,4)" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\bin\Net40\UDPBroadcast.Net40.dll"
+          target="lib\net40" />
+    <file src="..\bin\Net45\UDPBroadcast.Net45.dll"
+          target="lib\net45" />
+    <file src="..\bin\Net46\UDPBroadcast.Net46.dll"
+          target="lib\net46" />
+  </files>
+</package>
