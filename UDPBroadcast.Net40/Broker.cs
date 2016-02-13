@@ -165,7 +165,7 @@ namespace UDPBroadcast
       // ReSharper disable ExceptionNotDocumented
       if (Interlocked.CompareExchange(ref this._isStarted,
                                       Broker.Started,
-                                      Broker.NotStarted) == Broker.NotStarted)
+                                      Broker.NotStarted) != Broker.NotStarted)
       {
         return;
       }
