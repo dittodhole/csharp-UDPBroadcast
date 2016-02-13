@@ -339,7 +339,6 @@ namespace UDPBroadcast
     }
 
     /// <exception cref="Exception">A delegate callback throws an exception.</exception>
-    /// <exception cref="InvalidOperationException">If no path for <see cref="T" /> could be determined.</exception>
     /// <exception cref="InvalidOperationException">If no observer collection could be created.</exception>
     /// <exception cref="InvalidOperationException">If <see cref="PathFactory" /> is null.</exception>
     /// <exception cref="InvalidOperationException">If <see cref="ObserverFactory" /> is null.</exception>
