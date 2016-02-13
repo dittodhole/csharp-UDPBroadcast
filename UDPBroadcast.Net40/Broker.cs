@@ -68,7 +68,6 @@ namespace UDPBroadcast
                                               BrokerID = this.ID,
                                               Path = path
                                             };
-                              message.SetInstance(obj);
 
                               return message;
                               // ReSharper restore ExceptionNotDocumentedOptional
@@ -284,7 +283,7 @@ namespace UDPBroadcast
       }
 
       var message = messageFactory.Invoke(obj);
-
+      message.SetInstance(obj);
       this.Publish(message);
     }
 
