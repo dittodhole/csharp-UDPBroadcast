@@ -141,6 +141,7 @@ namespace UDPBroadcast
     public Func<byte[], IMessage> DeserializMessageFn { get; set; }
     public Guid ID { get; }
     public Func<byte[], object> DeserializeBodyFn { get; set; }
+    public Guid ID { get; }
     public Func<object, IMessage> MessageFactory { get; set; }
     public Func<ICollection<IObserver<IMessage>>> ObserverFactory { get; set; }
     public Func<Type, string> PathFactory { get; set; }
