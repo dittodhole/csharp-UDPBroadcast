@@ -7,6 +7,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using Anotar.CommonLogging;
 
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable CatchAllClause
 // ReSharper disable UnusedMember.Global
@@ -31,24 +32,24 @@ namespace UDPBroadcast
 
       this.PathFactory = type => type.FullName;
       this.ObserverFactory = () => new LinkedList<IObserver<IMessage>>();
-      this.DeserializMessageFn = buffer =>
-                                 {
-                                   // ReSharper disable ExceptionNotDocumentedOptional
-                                   if (buffer == null)
-                                   {
-                                     throw new ArgumentNullException(nameof(buffer));
-                                   }
+      this.DeserializeMessageFn = buffer =>
+                                  {
+                                    // ReSharper disable ExceptionNotDocumentedOptional
+                                    if (buffer == null)
+                                    {
+                                      throw new ArgumentNullException(nameof(buffer));
+                                    }
 
-                                   using (var memoryStream = new MemoryStream(buffer))
-                                   {
-                                     var binaryFormatter = new BinaryFormatter();
-                                     var obj = binaryFormatter.Deserialize(memoryStream);
-                                     var message = (IMessage) obj;
+                                    using (var memoryStream = new MemoryStream(buffer))
+                                    {
+                                      var binaryFormatter = new BinaryFormatter();
+                                      var obj = binaryFormatter.Deserialize(memoryStream);
+                                      var message = (IMessage) obj;
 
-                                     return message;
-                                   }
-                                   // ReSharper restore ExceptionNotDocumentedOptional
-                                 };
+                                      return message;
+                                    }
+                                    // ReSharper restore ExceptionNotDocumentedOptional
+                                  };
       this.MessageFactory = obj =>
                             {
                               // ReSharper disable ExceptionNotDocumentedOptional
@@ -138,7 +139,7 @@ namespace UDPBroadcast
     }
 
     private CancellationTokenSource CancellationTokenSource { get; }
-    public Func<byte[], IMessage> DeserializMessageFn { get; set; }
+    public Func<byte[], IMessage> DeserializeMessageFn { get; set; }
     public Func<byte[], object> DeserializeBodyFn { get; set; }
     public Guid ID { get; }
     public Func<object, IMessage> MessageFactory { get; set; }
@@ -235,11 +236,11 @@ namespace UDPBroadcast
             continue;
           }
 
-          var deserializMessageFn = this.DeserializMessageFn;
+          var deserializMessageFn = this.DeserializeMessageFn;
           if (deserializMessageFn == null)
           {
             LogTo.Error("{0} is null", // Not L10N
-                        nameof(this.DeserializMessageFn));
+                        nameof(this.DeserializeMessageFn));
             continue;
           }
 
