@@ -68,6 +68,7 @@ namespace UDPBroadcast
       {
         throw new InvalidOperationException($"{nameof(Message.SerializeBodyFn)} is null");
       }
+
       var body = serializeBodyFn.Invoke(obj);
 
       this.Body = body;
@@ -84,6 +85,7 @@ namespace UDPBroadcast
       }
 
       var obj = deserializeBodyFn.Invoke(this.Body);
+
       return obj;
     }
   }
