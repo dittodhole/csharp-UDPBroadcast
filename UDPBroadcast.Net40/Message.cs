@@ -2,6 +2,7 @@
 
 namespace UDPBroadcast
 {
+  [Serializable]
   public class Message : IMessage
   {
     public string Path { get; set; }
