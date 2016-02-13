@@ -117,11 +117,30 @@ namespace UDPBroadcast
                                   return buffer;
                                   // ReSharper restore ExceptionNotDocumentedOptional
                                 };
+      this.DeserializeBodyFn = buffer =>
+                               {
+                                 // ReSharper disable ExceptionNotDocumentedOptional
+                                 if (buffer == null)
+                                 {
+                                   throw new ArgumentNullException(nameof(buffer));
+                                 }
+
+                                 object obj;
+                                 using (var memoryStream = new MemoryStream(buffer))
+                                 {
+                                   var binaryFormatter = new BinaryFormatter();
+                                   obj = binaryFormatter.Deserialize(memoryStream);
+                                 }
+
+                                 return obj;
+                                 // ReSharper restore ExceptionNotDocumentedOptional
+                               };
     }
 
     private CancellationTokenSource CancellationTokenSource { get; }
     public Func<byte[], IMessage> DeserializMessageFn { get; set; }
     private Guid ID { get; }
+    public Func<byte[], object> DeserializeBodyFn { get; set; }
     public Func<object, IMessage> MessageFactory { get; set; }
     public Func<ICollection<IObserver<IMessage>>> ObserverFactory { get; set; }
     public Func<Type, string> PathFactory { get; set; }
@@ -411,6 +430,29 @@ namespace UDPBroadcast
       // ReSharper disable ExceptionNotDocumentedOptional
       observers.Add(messageObserver);
       // ReSharper restore ExceptionNotDocumentedOptional
+    }
+
+    /// <exception cref="ArgumentNullException"><paramref name="message" /> is <see langword="null" />.</exception>
+    /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+    /// <exception cref="InvalidOperationException">If <see cref="DeserializeBodyFn" /> is null.</exception>
+    public T GetInstance<T>(IMessage message)
+    {
+      if (message == null)
+      {
+        throw new ArgumentNullException(nameof(message));
+      }
+
+      var body = message.Body;
+      var deserializeBodyFn = this.DeserializeBodyFn;
+      if (deserializeBodyFn == null)
+      {
+        throw new InvalidOperationException($"{nameof(this.DeserializeBodyFn)} is null");
+      }
+
+      var obj = deserializeBodyFn.Invoke(body);
+      var instance = (T) obj;
+
+      return instance;
     }
   }
 }
