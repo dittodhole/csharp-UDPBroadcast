@@ -239,33 +239,45 @@ namespace UDPBroadcast
             LogTo.Warn("received empty message"); // Not L10N
             continue;
           }
-
-          try
+          if (message.Path == null)
           {
-            this.HandleMessage(message);
+            LogTo.Warn($"received a message with an empty {nameof(message.Path)}");
+            continue;
           }
-          catch (Exception ex)
+
+          ICollection<IObserver<IMessage>> observers;
+          if (!this.TypeBasedObservers.TryGetValue(message.Path,
+                                                   out observers))
           {
-            LogTo.ErrorException("could not handle message for {0}", // Not L10N
-                                 ex,
-                                 message.Path);
+            return;
+          }
+
+          foreach (var observer in observers)
+          {
+            try
+            {
+              observer.OnNext(message);
+            }
+            catch (Exception exNext)
+            {
+              try
+              {
+                observer.OnError(exNext);
+              }
+              catch (Exception exError)
+              {
+                LogTo.ErrorException("failed to invoke {0} for message at {1}", // Not L10N
+                                     exError,
+                                     nameof(observer.OnError),
+                                     message.Path);
+              }
+
+              LogTo.ErrorException("could not handle message for {0}", // Not L10N
+                                   exNext,
+                                   message.Path);
+            }
           }
         }
-      }
-    }
-
-    private void HandleMessage(IMessage message)
-    {
-      ICollection<IObserver<IMessage>> observers;
-      if (!this.TypeBasedObservers.TryGetValue(message.Path,
-                                               out observers))
-      {
-        return;
-      }
-
-      foreach (var observer in observers)
-      {
-        observer.OnNext(message);
       }
     }
 
