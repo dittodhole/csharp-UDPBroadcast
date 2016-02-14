@@ -25,7 +25,6 @@ namespace UDPBroadcast
       this.ID = Guid.NewGuid();
 
       this.TypeBasedObservers = new Dictionary<string, ICollection<IMessageObserver>>();
-      this.CancellationTokenSource = new CancellationTokenSource();
 
       this.PathFactory = type => type.FullName;
       this.ObserverFactory = () => new LinkedList<IMessageObserver>();
@@ -72,7 +71,7 @@ namespace UDPBroadcast
                                 };
     }
 
-    private CancellationTokenSource CancellationTokenSource { get; }
+    private CancellationTokenSource _cancellationTokenSource;
     public Func<byte[], IMessage> DeserializeMessageFn { get; set; }
     public Guid ID { get; }
     public Func<IMessage> MessageFactory { get; set; }
@@ -98,7 +97,10 @@ namespace UDPBroadcast
     {
       this.Stop();
 
-      var cancellationToken = this.CancellationTokenSource.Token;
+      var cancellationTokenSource = new CancellationTokenSource();
+      var cancellationToken = cancellationTokenSource.Token;
+
+      this._cancellationTokenSource = cancellationTokenSource;
 
       this.Start(cancellationToken);
     }
@@ -111,7 +113,7 @@ namespace UDPBroadcast
     /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
     public void Stop()
     {
-      this.CancellationTokenSource.Cancel();
+      this._cancellationTokenSource?.Cancel();
     }
 
     ~Broker()
@@ -130,7 +132,8 @@ namespace UDPBroadcast
 
       try
       {
-        this.CancellationTokenSource.Dispose();
+        this._cancellationTokenSource?.Dispose();
+        this._cancellationTokenSource = null;
       }
       catch (Exception exception)
       {
