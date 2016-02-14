@@ -2,13 +2,13 @@
 
 This project's aim is to provide a simple interface to broadcast messages within the local network by using [UDP](https://en.wikipedia.org/wiki/User_Datagram_Protocol). Just in case you can't do any [Zeroconf](https://en.wikipedia.org/wiki/Zero-configuration_networking), [UPnP](https://en.wikipedia.org/wiki/Universal_Plug_and_Play), [PGM](https://en.wikipedia.org/wiki/Pragmatic_General_Multicast), or message queuing with publish semantics to register and publish services with zero to none configuration effort.
 
-## Installing
-
-    PM> Install-Package UDPBroadcast
+## Installing [![NuGet Status](http://img.shields.io/nuget/v/UDPBroadcast.svg?style=flat)](https://www.nuget.org/packages/UDPBroadcast/)
 
 https://www.nuget.org/packages/UDPBroadcast/
 
-## Example
+    PM> Install-Package UDPBroadcast
+
+## Usage
 
 	using System;    
 	using UDPBroadcast;
