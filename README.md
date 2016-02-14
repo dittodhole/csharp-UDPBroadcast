@@ -13,31 +13,32 @@ https://www.nuget.org/packages/UDPBroadcast/
 	using System;    
 	using UDPBroadcast;
     
-    [Serializable]
-	public class Foo
+    [Serializable] // is needed as we are using BinaryFormatter internally by default
+	public sealed class Foo
     {
       public string Bar { get; set; }
     }
     
-    var broker = new Broker(1337);
-    var messageObserver = new MessageObserver<Foo>(broker.ID)
-    {
-      InterceptRemoteMessagesOnly = false,
-      InterceptOnNext = foo =>
+    using (var broker = new Broker(1337))
+	{
+      var messageObserver = new MessageObserver<Foo>(broker.ID)
       {
-        // TODO what to do next ...
-      }
-    };
-    broker.Subscribe(messageObserver);
-    broker.Start();
-    
-    {
-      var foo = new Foo
-      {
-        Bar = "hello"
+        InterceptRemoteMessagesOnly = false,
+        InterceptOnNext = foo =>
+        {
+          // yolo
+        }
       };
-      broker.Publish(foo);
-    }
+      broker.Subscribe(messageObserver);
+      broker.Start();
+    
+      broker.Publish(new Foo
+	  {
+	    Bar = "hello"
+	  });
+
+	  Console.ReadLine(); // or whatever mechanism you want to use to block in this example
+	}
 
 ## Adapting serialization/routing/creation ...
 
