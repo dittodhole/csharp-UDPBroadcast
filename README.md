@@ -73,4 +73,4 @@ csharp-UDPBroadcast is published under [WTFNMFPLv3](http://andreas.niedermair.na
 
 ## Spotify Playlist
 
-While implementing this project, I listened [this playlist](https://open.spotify.com/user/dittodhole/playlist/4iTsAO3Az90sdVJY4AX8di). If you want to make adaptions to the project, I strongly recommend listening to this playlist, as it gets you in the right mood.
+While implementing this project, I listened to [this playlist](https://open.spotify.com/user/dittodhole/playlist/4iTsAO3Az90sdVJY4AX8di). If you want to make adaptions to the project, I strongly recommend listening to this playlist, as it gets you in the right mood.
