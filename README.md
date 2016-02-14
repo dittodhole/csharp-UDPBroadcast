@@ -40,7 +40,7 @@ https://www.nuget.org/packages/UDPBroadcast/
 	  Console.ReadLine(); // or whatever mechanism you want to use to block in this example
 	}
 
-## Adapting serialization/routing/creation ...
+### Adapting serialization/routing/creation ...
 
 Instead of implementing your own broker, the following hooks in the `Broker` class exist to adapt the serialization/routing/creation of `IMessage` instances:
 
