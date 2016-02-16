@@ -10,9 +10,14 @@ namespace UDPBroadcast
     byte[] Body { get; }
     Guid BrokerID { get; }
     string Path { get; }
+
+    /// <exception cref="Exception">A generic exception may occur during <see cref="SetInstance"/>.</exception>
     void SetInstance(object obj);
+
     void SetPath(string path);
     void SetBrokerID(Guid brokerID);
+
+    /// <exception cref="Exception">A generic exception may occur during <see cref="GetInstance"/>.</exception>
     object GetInstance();
   }
 }

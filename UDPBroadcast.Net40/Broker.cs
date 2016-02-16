@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using Anotar.CommonLogging;
 
@@ -17,68 +15,37 @@ namespace UDPBroadcast
 {
   public partial class Broker : IDisposable
   {
+    private CancellationTokenSource _cancellationTokenSource;
     private bool _isDisposed;
 
-    public Broker(int port)
+    /// <exception cref="ArgumentNullException"><paramref name="messageSerializer"/> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="messageFactory"/> is <see langword="null" />.</exception>
+    public Broker(int port,
+                  IMessageSerializer messageSerializer,
+                  IMessageFactory messageFactory)
     {
+      if (messageSerializer == null)
+      {
+        throw new ArgumentNullException(nameof(messageSerializer));
+      }
+      if (messageFactory == null)
+      {
+        throw new ArgumentNullException(nameof(messageFactory));
+      }
+
       this.Port = port;
       this.ID = Guid.NewGuid();
-
+      this.MessageSerializer = messageSerializer;
+      this.MessageFactory = messageFactory;
       this.TypeBasedObservers = new Dictionary<string, ICollection<IMessageObserver>>();
-
       this.PathFactory = type => type.FullName;
-      this.ObserverFactory = () => new LinkedList<IMessageObserver>();
-      this.DeserializeMessageFn = buffer =>
-                                  {
-                                    // ReSharper disable ExceptionNotDocumentedOptional
-                                    if (buffer == null)
-                                    {
-                                      throw new ArgumentNullException(nameof(buffer));
-                                    }
-
-                                    using (var memoryStream = new MemoryStream(buffer))
-                                    {
-                                      var binaryFormatter = new BinaryFormatter();
-                                      var obj = binaryFormatter.Deserialize(memoryStream);
-                                      var message = (IMessage) obj;
-
-                                      return message;
-                                    }
-                                    // ReSharper restore ExceptionNotDocumentedOptional
-                                  };
-      this.MessageFactory = () => new Message();
-      this.SerializeMessageFn = message =>
-                                {
-                                  // ReSharper disable ExceptionNotDocumentedOptional
-                                  if (message == null)
-                                  {
-                                    throw new ArgumentNullException(nameof(message));
-                                  }
-
-                                  byte[] buffer;
-
-                                  var binaryFormatter = new BinaryFormatter();
-                                  using (var memoryStream = new MemoryStream())
-                                  {
-                                    binaryFormatter.Serialize(memoryStream,
-                                                              message);
-
-                                    buffer = memoryStream.ToArray();
-                                  }
-
-                                  return buffer;
-                                  // ReSharper restore ExceptionNotDocumentedOptional
-                                };
     }
 
-    private CancellationTokenSource _cancellationTokenSource;
-    public Func<byte[], IMessage> DeserializeMessageFn { get; set; }
     public Guid ID { get; }
-    public Func<IMessage> MessageFactory { get; set; }
-    public Func<ICollection<IMessageObserver>> ObserverFactory { get; set; }
+    private IMessageSerializer MessageSerializer { get; }
+    private IMessageFactory MessageFactory { get; }
     public Func<Type, string> PathFactory { get; set; }
     private int Port { get; }
-    public Func<IMessage, byte[]> SerializeMessageFn { get; set; }
     private IDictionary<string, ICollection<IMessageObserver>> TypeBasedObservers { get; }
 
     public void Dispose()
@@ -91,8 +58,8 @@ namespace UDPBroadcast
 
 #if NET40 || NET46
     /// <exception cref="ObjectDisposedException">The token source has been disposed.</exception>
-#endif
     /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
+#endif
     public void Start()
     {
       this.Stop();
@@ -109,8 +76,8 @@ namespace UDPBroadcast
 
 #if NET40 || NET46
     /// <exception cref="ObjectDisposedException">This <see cref="T:System.Threading.CancellationTokenSource" /> has been disposed.</exception>
-#endif
     /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
+#endif
     public void Stop()
     {
       this._cancellationTokenSource?.Cancel();
@@ -174,18 +141,10 @@ namespace UDPBroadcast
             continue;
           }
 
-          var deserializMessageFn = this.DeserializeMessageFn;
-          if (deserializMessageFn == null)
-          {
-            LogTo.Error("{0} is null", // Not L10N
-                        nameof(this.DeserializeMessageFn));
-            continue;
-          }
-
           IMessage message;
           try
           {
-            message = deserializMessageFn.Invoke(buffer);
+            message = this.MessageSerializer.Deserialize(buffer);
           }
           catch (Exception ex)
           {
@@ -279,7 +238,7 @@ namespace UDPBroadcast
       var bodyType = obj.GetType();
       var path = pathFactory.Invoke(bodyType);
 
-      var message = messageFactory.Invoke();
+      var message = this.MessageFactory.Create();
       message.SetBrokerID(this.ID);
       message.SetInstance(obj);
       message.SetPath(path);
@@ -297,7 +256,6 @@ namespace UDPBroadcast
     ///   <see cref="F:System.Net.IPEndPoint.MinPort" />.-or- <see cref="Port" /> is greater than
     ///   <see cref="F:System.Net.IPEndPoint.MaxPort" />.
     /// </exception>
-    /// <exception cref="InvalidOperationException">If <see cref="SerializeMessageFn" /> is null.</exception>
     /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null" />.</exception>
 #if NET45 || NET46
     /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
@@ -309,13 +267,7 @@ namespace UDPBroadcast
         throw new ArgumentNullException(nameof(message));
       }
 
-      var serializeMessageFn = this.SerializeMessageFn;
-      if (serializeMessageFn == null)
-      {
-        throw new InvalidOperationException($"{nameof(this.SerializeMessageFn)} is null");
-      }
-
-      var dgram = serializeMessageFn.Invoke(message);
+      var dgram = this.MessageSerializer.Serialize(message);
 
       using (var udpClient = new UdpClient())
       {
@@ -346,8 +298,6 @@ namespace UDPBroadcast
     /// <exception cref="Exception">A delegate callback throws an exception.</exception>
     /// <exception cref="InvalidOperationException">If no observer collection could be created.</exception>
     /// <exception cref="InvalidOperationException">If <see cref="PathFactory" /> is null.</exception>
-    /// <exception cref="InvalidOperationException">If <see cref="ObserverFactory" /> is null.</exception>
-    /// <exception cref="InvalidOperationException">If the observer collection is read-only.</exception>
     /// <exception cref="ArgumentNullException"><paramref name="messageObserver"/> is <see langword="null" />.</exception>
     public void Subscribe(IMessageObserver messageObserver)
     {
@@ -374,21 +324,7 @@ namespace UDPBroadcast
       if (!this.TypeBasedObservers.TryGetValue(path,
                                                out observers))
       {
-        var observerFactory = this.ObserverFactory;
-        if (observerFactory == null)
-        {
-          throw new InvalidOperationException($"{nameof(this.ObserverFactory)} is null");
-        }
-
-        observers = observerFactory.Invoke();
-        if (observers == null)
-        {
-          throw new InvalidOperationException("The created observer collection is null"); // Not L10N
-        }
-        if (observers.IsReadOnly)
-        {
-          throw new InvalidOperationException("The observer collection is read-only"); // Not L10N
-        }
+        observers = new LinkedList<IMessageObserver>();
 
         this.TypeBasedObservers.Add(path,
                                     observers);

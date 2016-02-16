@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -9,67 +11,29 @@ namespace UDPBroadcast
   [Serializable]
   public class Message : IMessage
   {
-    static Message()
-    {
-      Message.SerializeBodyFn = obj =>
-                                {
-                                  // ReSharper disable ExceptionNotDocumentedOptional
-                                  if (obj == null)
-                                  {
-                                    throw new ArgumentNullException(nameof(obj));
-                                  }
-
-                                  byte[] buffer;
-
-                                  var binaryFormatter = new BinaryFormatter();
-                                  using (var memoryStream = new MemoryStream())
-                                  {
-                                    binaryFormatter.Serialize(memoryStream,
-                                                              obj);
-                                    buffer = memoryStream.ToArray();
-                                  }
-
-                                  return buffer;
-                                  // ReSharper restore ExceptionNotDocumentedOptional
-                                };
-      Message.DeserializeBodyFn = buffer =>
-                                  {
-                                    // ReSharper disable ExceptionNotDocumentedOptional
-                                    if (buffer == null)
-                                    {
-                                      throw new ArgumentNullException(nameof(buffer));
-                                    }
-
-                                    object obj;
-                                    using (var memoryStream = new MemoryStream(buffer))
-                                    {
-                                      var binaryFormatter = new BinaryFormatter();
-                                      obj = binaryFormatter.Deserialize(memoryStream);
-                                    }
-
-                                    return obj;
-                                    // ReSharper restore ExceptionNotDocumentedOptional
-                                  };
-    }
-
-    public static Func<byte[], object> DeserializeBodyFn { get; set; }
-    public static Func<object, byte[]> SerializeBodyFn { get; set; }
-
     public string Path { get; set; }
     public byte[] Body { get; set; }
     public Guid BrokerID { get; set; }
 
-    /// <exception cref="Exception">A delegate callback throws an exception.</exception>
-    /// <exception cref="InvalidOperationException">If <see cref="SerializeBodyFn" /> is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null" />.</exception>
+    /// <exception cref="SerializationException">An error has occurred during serialization, such as if an object in the <paramref name="graph" /> parameter is not marked as serializable. </exception>
+    /// <exception cref="SecurityException">The caller does not have the required permission. </exception>
     public void SetInstance(object obj)
     {
-      var serializeBodyFn = Message.SerializeBodyFn;
-      if (serializeBodyFn == null)
+      if (obj == null)
       {
-        throw new InvalidOperationException($"{nameof(Message.SerializeBodyFn)} is null");
+        throw new ArgumentNullException(nameof(obj));
       }
 
-      var body = serializeBodyFn.Invoke(obj);
+      byte[] body;
+
+      var binaryFormatter = new BinaryFormatter();
+      using (var memoryStream = new MemoryStream())
+      {
+        binaryFormatter.Serialize(memoryStream,
+                                  obj);
+        body = memoryStream.ToArray();
+      }
 
       this.Body = body;
     }
@@ -84,17 +48,23 @@ namespace UDPBroadcast
       this.BrokerID = brokerID;
     }
 
-    /// <exception cref="Exception">A delegate callback throws an exception.</exception>
-    /// <exception cref="InvalidOperationException">If <see cref="DeserializeBodyFn" /> is null.</exception>
+    /// <exception cref="InvalidOperationException">If <see cref="Body"/> is null.</exception>
+    /// <exception cref="SerializationException">The <paramref name="serializationStream" /> supports seeking, but its length is 0. -or-The target type is a <see cref="T:System.Decimal" />, but the value is out of range of the <see cref="T:System.Decimal" /> type.</exception>
+    /// <exception cref="SecurityException">The caller does not have the required permission. </exception>
     public object GetInstance()
     {
-      var deserializeBodyFn = Message.DeserializeBodyFn;
-      if (deserializeBodyFn == null)
+      var body = this.Body;
+      if (body == null)
       {
-        throw new InvalidOperationException($"{nameof(Message.DeserializeBodyFn)} is null");
+        throw new InvalidOperationException($"{nameof(this.Body)} is null");
       }
 
-      var obj = deserializeBodyFn.Invoke(this.Body);
+      object obj;
+      using (var memoryStream = new MemoryStream(body))
+      {
+        var binaryFormatter = new BinaryFormatter();
+        obj = binaryFormatter.Deserialize(memoryStream);
+      }
 
       return obj;
     }

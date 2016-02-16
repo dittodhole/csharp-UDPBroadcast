@@ -6,7 +6,11 @@ namespace UDPBroadcast.Example
   {
     static void Main(string[] args)
     {
-      var broker = new Broker(1337);
+      var messageSerializer = new MessageSerializer();
+      var messageFactory = new MessageFactory();
+      var broker = new Broker(1337,
+                              messageSerializer,
+                              messageFactory);
       var messageObserver = new MessageObserver<Foo>(broker.ID)
                             {
                               InterceptRemoteMessagesOnly = false,
@@ -18,13 +22,10 @@ namespace UDPBroadcast.Example
       broker.Subscribe(messageObserver);
       broker.Start();
 
-      {
-        var foo = new Foo
-                  {
-                    Bar = "hello"
-                  };
-        broker.Publish(foo);
-      }
+      broker.Publish(new Foo
+                     {
+                       Bar = "hello"
+                     });
 
       Console.ReadLine();
     }

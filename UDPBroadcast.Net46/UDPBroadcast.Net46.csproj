@@ -60,14 +60,26 @@
     <Compile Include="..\UDPBroadcast.Net40\IMessage.cs">
       <Link>IMessage.cs</Link>
     </Compile>
+    <Compile Include="..\UDPBroadcast.Net40\IMessageFactory.cs">
+      <Link>IMessageFactory.cs</Link>
+    </Compile>
     <Compile Include="..\UDPBroadcast.Net40\IMessageObserver.cs">
       <Link>IMessageObserver.cs</Link>
+    </Compile>
+    <Compile Include="..\UDPBroadcast.Net40\IMessageSerializer.cs">
+      <Link>IMessageSerializer.cs</Link>
     </Compile>
     <Compile Include="..\UDPBroadcast.Net40\Message.cs">
       <Link>Message.cs</Link>
     </Compile>
+    <Compile Include="..\UDPBroadcast.Net40\MessageFactory.cs">
+      <Link>MessageFactory.cs</Link>
+    </Compile>
     <Compile Include="..\UDPBroadcast.Net40\MessageObserver.cs">
       <Link>MessageObserver.cs</Link>
+    </Compile>
+    <Compile Include="..\UDPBroadcast.Net40\MessageSerializer.cs">
+      <Link>MessageSerializer.cs</Link>
     </Compile>
     <Compile Include="Partial.Broker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
