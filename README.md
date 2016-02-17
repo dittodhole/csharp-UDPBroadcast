@@ -20,10 +20,14 @@ https://www.nuget.org/packages/UDPBroadcast/
     }
     
     var messageSerializer = new MessageSerializer();
+    var messageBodySerializer = new MessageBodySerializer();
     var messageFactory = new MessageFactory();
+    var pathFactory = new PathFactory();
     using (var broker = new Broker(1337,
                                    messageSerializer,
-                                   messageFactory))
+                                   messageBodySerializer,
+                                   messageFactory,
+                                   pathFactory))
     {
       var messageObserver = new MessageObserver<Foo>(broker.ID)
       {
@@ -49,10 +53,14 @@ https://www.nuget.org/packages/UDPBroadcast/
 **IMessageFactory**
 You can inject your own `IMessageFactory` implementation, to send eg `CustomMessage` instances instead to default `Message`.
 
-Please be aware that you have to implement your own serialization-mechanics when creating your own `IMessage` implementation in the `SetInstance` and `GetInstance` methods.
-
 **IMessageSerializer**
 Instead of using the default `BinaryFormatter` as the serializer of `IMessage` instances, you can provide your own serialization mechanism.
+
+**IMessageBodySerializer**
+Instead of using the default `BinaryFormatter` as the serializer of `IMessage.Body`, you can provide your own serialization mechanism.
+
+**IPathFactory**
+If you ever come across the need to adapt routing from the default `Type.FullName` of the encapsulated instance, you can provider your own implementation.
 
 ## License
 

@@ -8,6 +8,7 @@ namespace UDPBroadcast
   }
 
   public interface IMessageObserver<T> : IMessageObserver
+    where T : class
   {
   }
 }

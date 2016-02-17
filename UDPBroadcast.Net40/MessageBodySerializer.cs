@@ -8,12 +8,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace UDPBroadcast
 {
-  public class MessageSerializer : IMessageSerializer
+  public class MessageBodySerializer : IMessageBodySerializer
   {
     /// <exception cref="Exception">A generic error has occurred during deserialization.</exception>
-    /// <exception cref="ArgumentNullException"><paramref name="buffer" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="buffer"/> is <see langword="null" />.</exception>
     /// <exception cref="SerializationException">An error has occurred during deserialization.</exception>
-    public IMessage Deserialize(byte[] buffer)
+    public object Deserialize(byte[] buffer)
     {
       if (buffer == null)
       {
@@ -24,34 +24,30 @@ namespace UDPBroadcast
       {
         var binaryFormatter = new BinaryFormatter();
         var obj = binaryFormatter.Deserialize(memoryStream);
-        var message = obj as IMessage;
 
-        return message;
+        return obj;
       }
     }
 
     /// <exception cref="Exception">A generic error has occurred during serialization.</exception>
-    /// <exception cref="ArgumentNullException"><paramref name="message" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null" />.</exception>
     /// <exception cref="SerializationException">An error has occurred during serialization.</exception>
-    public byte[] Serialize(IMessage message)
+    public byte[] Serialize(object obj)
     {
-      if (message == null)
+      if (obj == null)
       {
-        throw new ArgumentNullException(nameof(message));
+        throw new ArgumentNullException(nameof(obj));
       }
-
-      byte[] buffer;
 
       var binaryFormatter = new BinaryFormatter();
       using (var memoryStream = new MemoryStream())
       {
         binaryFormatter.Serialize(memoryStream,
-                                  message);
+                                  obj);
+        var body = memoryStream.ToArray();
 
-        buffer = memoryStream.ToArray();
+        return body;
       }
-
-      return buffer;
     }
   }
 }

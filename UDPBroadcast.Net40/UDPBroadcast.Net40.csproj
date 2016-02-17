@@ -80,13 +80,17 @@
   <ItemGroup>
     <Compile Include="Broker.cs" />
     <Compile Include="IMessage.cs" />
+    <Compile Include="IMessageBodySerializer.cs" />
     <Compile Include="IMessageFactory.cs" />
     <Compile Include="IMessageObserver.cs" />
     <Compile Include="IMessageSerializer.cs" />
+    <Compile Include="IPathFactory.cs" />
     <Compile Include="Message.cs" />
+    <Compile Include="MessageBodySerializer.cs" />
     <Compile Include="MessageFactory.cs" />
     <Compile Include="MessageObserver.cs" />
     <Compile Include="MessageSerializer.cs" />
+    <Compile Include="PathFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

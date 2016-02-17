@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.Serialization;
 using System.Threading;
 using Anotar.CommonLogging;
 
-// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
-// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedParameter.Local
+// ReSharper disable ExceptionNotDocumentedOptional
 // ReSharper disable CatchAllClause
-// ReSharper disable UnusedMember.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
 namespace UDPBroadcast
 {
@@ -18,98 +20,55 @@ namespace UDPBroadcast
     private CancellationTokenSource _cancellationTokenSource;
     private bool _isDisposed;
 
-    /// <exception cref="ArgumentNullException"><paramref name="messageSerializer"/> is <see langword="null" />.</exception>
-    /// <exception cref="ArgumentNullException"><paramref name="messageFactory"/> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="messageSerializer" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="messageBodySerializer" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="messageFactory" /> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="pathFactory" /> is <see langword="null" />.</exception>
     public Broker(int port,
                   IMessageSerializer messageSerializer,
-                  IMessageFactory messageFactory)
+                  IMessageBodySerializer messageBodySerializer,
+                  IMessageFactory messageFactory,
+                  IPathFactory pathFactory)
     {
       if (messageSerializer == null)
       {
         throw new ArgumentNullException(nameof(messageSerializer));
       }
+      if (messageBodySerializer == null)
+      {
+        throw new ArgumentNullException(nameof(messageBodySerializer));
+      }
       if (messageFactory == null)
       {
         throw new ArgumentNullException(nameof(messageFactory));
       }
+      if (pathFactory == null)
+      {
+        throw new ArgumentNullException(nameof(pathFactory));
+      }
 
       this.Port = port;
-      this.ID = Guid.NewGuid();
       this.MessageSerializer = messageSerializer;
+      this.MessageBodySerializer = messageBodySerializer;
       this.MessageFactory = messageFactory;
-      this.TypeBasedObservers = new Dictionary<string, ICollection<IMessageObserver>>();
-      this.PathFactory = type => type.FullName;
+      this.PathFactory = pathFactory;
+
+      this.ID = Guid.NewGuid();
     }
 
     public Guid ID { get; }
-    private IMessageSerializer MessageSerializer { get; }
+    private IMessageBodySerializer MessageBodySerializer { get; }
     private IMessageFactory MessageFactory { get; }
-    public Func<Type, string> PathFactory { get; set; }
+    private IMessageSerializer MessageSerializer { get; }
+    private IPathFactory PathFactory { get; }
     private int Port { get; }
-    private IDictionary<string, ICollection<IMessageObserver>> TypeBasedObservers { get; }
+    private IDictionary<string, ICollection<IMessageObserver>> TypeBasedObservers { get; } = new Dictionary<string, ICollection<IMessageObserver>>();
 
     public void Dispose()
     {
       this.Dispose(true);
-      // ReSharper disable ExceptionNotDocumentedOptional
       GC.SuppressFinalize(this);
-      // ReSharper restore ExceptionNotDocumentedOptional
     }
-
-#if NET40 || NET46
-    /// <exception cref="ObjectDisposedException">The token source has been disposed.</exception>
-    /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
-#endif
-    public void Start()
-    {
-      this.Stop();
-
-      var cancellationTokenSource = new CancellationTokenSource();
-      var cancellationToken = cancellationTokenSource.Token;
-
-      this._cancellationTokenSource = cancellationTokenSource;
-
-      this.Start(cancellationToken);
-    }
-
-    partial void Start(CancellationToken cancellationToken);
-
-#if NET40 || NET46
-    /// <exception cref="ObjectDisposedException">This <see cref="T:System.Threading.CancellationTokenSource" /> has been disposed.</exception>
-    /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
-#endif
-    public void Stop()
-    {
-      this._cancellationTokenSource?.Cancel();
-    }
-
-    ~Broker()
-    {
-      this.Dispose(false);
-    }
-
-    // ReSharper disable UnusedParameter.Local
-    private void Dispose(bool disposing)
-    {
-      if (this._isDisposed)
-      {
-        return;
-      }
-      this._isDisposed = true;
-
-      try
-      {
-        this._cancellationTokenSource?.Dispose();
-        this._cancellationTokenSource = null;
-      }
-      catch (Exception exception)
-      {
-        LogTo.ErrorException("could not dispose CancellationTokenSource", // Not L10N
-                             exception);
-      }
-    }
-
-    // ReSharper restore UnusedParameter.Local
 
     private void Receive(CancellationToken cancellationToken)
     {
@@ -126,8 +85,8 @@ namespace UDPBroadcast
           }
           catch (SocketException ex)
           {
-            LogTo.WarnException("some socket excpetion occured while receiving UDP packages", // Not L10N
-                                ex);
+            LogTo.ErrorException("some socket excpetion occured while receiving UDP packages", // Not L10N
+                                 ex);
             continue;
           }
           catch (ObjectDisposedException)
@@ -136,8 +95,8 @@ namespace UDPBroadcast
           }
           catch (Exception ex)
           {
-            LogTo.WarnException("some exception occured during receiving UDP packages", // Not L10N
-                                ex);
+            LogTo.ErrorException("some exception occured during receiving UDP packages", // Not L10N
+                                 ex);
             continue;
           }
 
@@ -173,34 +132,15 @@ namespace UDPBroadcast
 
           foreach (var observer in observers)
           {
-            try
-            {
-              observer.OnNext(message);
-            }
-            catch (Exception exNext)
-            {
-              try
-              {
-                observer.OnError(exNext);
-              }
-              catch (Exception exError)
-              {
-                LogTo.ErrorException("failed to invoke {0} for message at {1}", // Not L10N
-                                     exError,
-                                     nameof(IObserver<IMessage>.OnError),
-                                     message.Path);
-              }
-
-              LogTo.ErrorException("could not handle message for {0}", // Not L10N
-                                   exNext,
-                                   message.Path);
-            }
+            observer.OnNext(message);
           }
         }
       }
     }
 
-    /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="obj" /> is <see langword="null" />.</exception>
+    /// <exception cref="SerializationException">An error has occurred during serialization.</exception>
+    /// <exception cref="Exception">A generic exception occured during the creation of an <see cref="IMessage" /> instance.</exception>
     /// <exception cref="SocketException">
     ///   An error occurred when accessing the socket. See the Remarks section for more
     ///   information.
@@ -210,12 +150,6 @@ namespace UDPBroadcast
     ///   <see cref="F:System.Net.IPEndPoint.MinPort" />.-or- <see cref="Port" /> is greater than
     ///   <see cref="F:System.Net.IPEndPoint.MaxPort" />.
     /// </exception>
-    /// <exception cref="InvalidOperationException">If <see cref="MessageFactory" /> is null.</exception>
-    /// <exception cref="InvalidOperationException">If <see cref="PathFactory" /> is null.</exception>
-    /// <exception cref="ArgumentNullException"><paramref name="obj"/> is <see langword="null" />.</exception>
-#if NET45 || NET46
-    /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
-#endif
     public void Publish(object obj)
     {
       if (obj == null)
@@ -223,30 +157,26 @@ namespace UDPBroadcast
         throw new ArgumentNullException(nameof(obj));
       }
 
-      var messageFactory = this.MessageFactory;
-      if (messageFactory == null)
-      {
-        throw new InvalidOperationException($"{nameof(this.MessageFactory)} is null");
-      }
-
-      var pathFactory = this.PathFactory;
-      if (pathFactory == null)
-      {
-        throw new InvalidOperationException($"{nameof(this.PathFactory)} is null");
-      }
-
+      var body = this.MessageBodySerializer.Serialize(obj);
       var bodyType = obj.GetType();
-      var path = pathFactory.Invoke(bodyType);
+      var path = this.PathFactory.GetPath(bodyType);
 
       var message = this.MessageFactory.Create();
-      message.SetBrokerID(this.ID);
-      message.SetInstance(obj);
-      message.SetPath(path);
+      if (message == null)
+      {
+        return;
+      }
+
+      message.BrokerID = this.ID;
+      message.Body = body;
+      message.Path = path;
 
       this.Publish(message);
     }
 
-    /// <exception cref="Exception">A delegate callback throws an exception.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="message" /> is <see langword="null" />.</exception>
+    /// <exception cref="SerializationException">An error has occurred during serialization.</exception>
+    /// <exception cref="Exception">A generic error has occurred during serialization.</exception>
     /// <exception cref="SocketException">
     ///   An error occurred when accessing the socket. See the Remarks section for more
     ///   information.
@@ -256,10 +186,6 @@ namespace UDPBroadcast
     ///   <see cref="F:System.Net.IPEndPoint.MinPort" />.-or- <see cref="Port" /> is greater than
     ///   <see cref="F:System.Net.IPEndPoint.MaxPort" />.
     /// </exception>
-    /// <exception cref="ArgumentNullException"><paramref name="message"/> is <see langword="null" />.</exception>
-#if NET45 || NET46
-    /// <exception cref="OverflowException">The array is multidimensional and contains more than <see cref="F:System.Int32.MaxValue" /> elements.</exception>
-#endif
     public void Publish(IMessage message)
     {
       if (message == null)
@@ -268,37 +194,30 @@ namespace UDPBroadcast
       }
 
       var dgram = this.MessageSerializer.Serialize(message);
+      if (dgram == null)
+      {
+        return;
+      }
 
       using (var udpClient = new UdpClient())
       {
-        // ReSharper disable ExceptionNotDocumentedOptional
         udpClient.Client.SetSocketOption(SocketOptionLevel.Socket,
                                          SocketOptionName.Broadcast,
                                          1);
-        // ReSharper restore ExceptionNotDocumentedOptional
-        // ReSharper disable ExceptionNotDocumentedOptional
         udpClient.Client.SetSocketOption(SocketOptionLevel.Socket,
                                          SocketOptionName.DontRoute,
                                          1);
-        // ReSharper restore ExceptionNotDocumentedOptional
 
-        // ReSharper disable ExceptionNotDocumentedOptional
         var ipEndPoint = new IPEndPoint(IPAddress.Broadcast,
                                         this.Port);
-        // ReSharper restore ExceptionNotDocumentedOptional
 
-        // ReSharper disable ExceptionNotDocumentedOptional
         udpClient.Send(dgram,
-                       dgram.Length,
+                       dgram.Count(),
                        ipEndPoint);
-        // ReSharper restore ExceptionNotDocumentedOptional
       }
     }
 
-    /// <exception cref="Exception">A delegate callback throws an exception.</exception>
-    /// <exception cref="InvalidOperationException">If no observer collection could be created.</exception>
-    /// <exception cref="InvalidOperationException">If <see cref="PathFactory" /> is null.</exception>
-    /// <exception cref="ArgumentNullException"><paramref name="messageObserver"/> is <see langword="null" />.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="messageObserver" /> is <see langword="null" />.</exception>
     public void Subscribe(IMessageObserver messageObserver)
     {
       if (messageObserver == null)
@@ -306,21 +225,10 @@ namespace UDPBroadcast
         throw new ArgumentNullException(nameof(messageObserver));
       }
 
-      var pathFactory = this.PathFactory;
-      if (pathFactory == null)
-      {
-        throw new InvalidOperationException($"{nameof(this.PathFactory)} is null");
-      }
-
       var bodyType = messageObserver.GetBodyType();
-      var path = pathFactory.Invoke(bodyType);
-      if (path == null)
-      {
-        throw new InvalidOperationException($"Path for {bodyType} was null");
-      }
+      var path = this.PathFactory.GetPath(bodyType);
 
       ICollection<IMessageObserver> observers;
-      // ReSharper disable ExceptionNotDocumentedOptional
       if (!this.TypeBasedObservers.TryGetValue(path,
                                                out observers))
       {
@@ -329,11 +237,59 @@ namespace UDPBroadcast
         this.TypeBasedObservers.Add(path,
                                     observers);
       }
-      // ReSharper restore ExceptionNotDocumentedOptional
 
-      // ReSharper disable ExceptionNotDocumentedOptional
       observers.Add(messageObserver);
-      // ReSharper restore ExceptionNotDocumentedOptional
+    }
+
+#if NET40 || NET46
+    /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
+#endif
+    public void Start()
+    {
+      this.Stop();
+
+      var cancellationTokenSource = new CancellationTokenSource();
+      var cancellationToken = cancellationTokenSource.Token;
+
+      this._cancellationTokenSource = cancellationTokenSource;
+
+      this.Start(cancellationToken);
+    }
+
+    partial void Start(CancellationToken cancellationToken);
+
+#if NET40 || NET46
+    /// <exception cref="AggregateException">An aggregate exception containing all the exceptions thrown by the registered callbacks on the associated <see cref="T:System.Threading.CancellationToken" />.</exception>
+#endif
+    public void Stop()
+    {
+      this._cancellationTokenSource?.Cancel();
+      this._cancellationTokenSource = null;
+    }
+
+    ~Broker()
+    {
+      this.Dispose(false);
+    }
+
+    private void Dispose(bool disposing)
+    {
+      if (this._isDisposed)
+      {
+        return;
+      }
+      this._isDisposed = true;
+
+      try
+      {
+        this._cancellationTokenSource?.Dispose();
+        this._cancellationTokenSource = null;
+      }
+      catch (Exception exception)
+      {
+        LogTo.ErrorException("could not dispose CancellationTokenSource", // Not L10N
+                             exception);
+      }
     }
   }
 }
