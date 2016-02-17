@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -62,7 +63,7 @@ namespace UDPBroadcast
     private IMessageSerializer MessageSerializer { get; }
     private IPathFactory PathFactory { get; }
     private int Port { get; }
-    private IDictionary<string, ICollection<IMessageObserver>> TypeBasedObservers { get; } = new Dictionary<string, ICollection<IMessageObserver>>();
+    private ConcurrentDictionary<string, ICollection<IMessageObserver>> TypeBasedObservers { get; } = new ConcurrentDictionary<string, ICollection<IMessageObserver>>();
 
     public void Dispose()
     {
@@ -218,6 +219,7 @@ namespace UDPBroadcast
     }
 
     /// <exception cref="ArgumentNullException"><paramref name="messageObserver" /> is <see langword="null" />.</exception>
+    /// <exception cref="OverflowException">The dictionary already contains the maximum number of elements (<see cref="F:System.Int32.MaxValue" />).</exception>
     public void Subscribe(IMessageObserver messageObserver)
     {
       if (messageObserver == null)
@@ -228,15 +230,8 @@ namespace UDPBroadcast
       var bodyType = messageObserver.GetBodyType();
       var path = this.PathFactory.GetPath(bodyType);
 
-      ICollection<IMessageObserver> observers;
-      if (!this.TypeBasedObservers.TryGetValue(path,
-                                               out observers))
-      {
-        observers = new LinkedList<IMessageObserver>();
-
-        this.TypeBasedObservers.Add(path,
-                                    observers);
-      }
+      var observers = this.TypeBasedObservers.GetOrAdd(path,
+                                                       key => new LinkedList<IMessageObserver>());
 
       observers.Add(messageObserver);
     }
