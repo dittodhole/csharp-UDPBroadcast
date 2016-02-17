@@ -165,6 +165,7 @@ namespace UDPBroadcast
       var message = this.MessageFactory.Create();
       if (message == null)
       {
+        LogTo.Error($"{nameof(message)} was null");
         return;
       }
 
@@ -197,6 +198,7 @@ namespace UDPBroadcast
       var dgram = this.MessageSerializer.Serialize(message);
       if (dgram == null)
       {
+        LogTo.Error($"{nameof(dgram)} was null");
         return;
       }
 

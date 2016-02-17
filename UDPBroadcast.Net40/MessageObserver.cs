@@ -31,6 +31,7 @@ namespace UDPBroadcast
     {
       if (value == null)
       {
+        LogTo.Error($"{nameof(value)} was null");
         return;
       }
 
