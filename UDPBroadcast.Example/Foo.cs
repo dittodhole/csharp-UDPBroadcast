@@ -1,5 +1,7 @@
 ﻿using System;
 
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+
 namespace UDPBroadcast.Example
 {
   [Serializable]
