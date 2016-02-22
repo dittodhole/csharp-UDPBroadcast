@@ -9,6 +9,7 @@
       UDPBroadcast aims to provide a simple interface to broadcast messages within the local network over UDP.
     </description>
     <projectUrl>https://github.com/dittodhole/csharp-UDPBroadcast</projectUrl>
+    <iconUrl>https://raw.github.com/dittodhole/csharp-UDPBroadcast/master/Icons/package_icon.png</iconUrl>
     <licenseUrl>https://raw.githubusercontent.com/dittodhole/WTFNMFPLv3/master/LICENSE</licenseUrl>
     <dependencies>
       <group targetFramework="net40">
