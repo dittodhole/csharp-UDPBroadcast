@@ -3,4 +3,5 @@
   <Seal />
   <Anotar.CommonLogging />
   <Stamp />
+  <SemVer.Git UseProject="False" BaseVersion="6.0.0" />
 </Weavers>

@@ -1,6 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Weavers>
   <Seal />
   <Anotar.CommonLogging />
   <Stamp />
+  <SemVer.Git UseProject="False" BaseVersion="6.0.0" />
 </Weavers>
