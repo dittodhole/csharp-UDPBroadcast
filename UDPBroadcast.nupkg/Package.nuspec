@@ -27,11 +27,11 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="..\bin\Net40\UDPBroadcast.Net40.dll"
+    <file src="..\lib\Net40\UDPBroadcast.Net40.dll"
           target="lib\net40" />
-    <file src="..\bin\Net45\UDPBroadcast.Net45.dll"
+    <file src="..\lib\Net45\UDPBroadcast.Net45.dll"
           target="lib\net45" />
-    <file src="..\bin\Net46\UDPBroadcast.Net46.dll"
+    <file src="..\lib\Net46\UDPBroadcast.Net46.dll"
           target="lib\net46" />
   </files>
 </package>
