@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("UDPBroadcast")]
-[assembly: AssemblyDescription("")]
 [assembly: AssemblyProduct("UDPBroadcast")]
+[assembly: AssemblyCompany("Andreas Niedermair")]
+[assembly: AssemblyDescription("UDPBroadcast aims to provide a simple interface to broadcast messages within the local network over UDP.")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
