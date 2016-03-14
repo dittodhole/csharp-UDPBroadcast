@@ -114,7 +114,7 @@
   <Target Name="BeforeBuild">
   </Target>
   <Target Name="AfterBuild">
-    <Exec Command="ROBOCOPY &quot;$(OutDir)\&quot; &quot;$(SolutionDir)lib\Net40&quot; $(TargetFileName)" IgnoreExitCode="true" />
+    <Exec Command="ROBOCOPY &quot;$(OutDir)\&quot; &quot;$(SolutionDir)lib\Net40&quot; $(TargetName).*" IgnoreExitCode="true" />
   </Target>
   <Import Project="..\packages\Fody.1.30.0-beta01\build\portable-net+sl+win+wpa+wp\Fody.targets" Condition="Exists('..\packages\Fody.1.30.0-beta01\build\portable-net+sl+win+wpa+wp\Fody.targets')" />
   <Import Project="..\packages\SemVer.Git.Fody.1.2.1\build\SemVer.Git.Fody.targets" Condition="Exists('..\packages\SemVer.Git.Fody.1.2.1\build\SemVer.Git.Fody.targets')" />
