@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Anotar.CommonLogging, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Anotar.CommonLogging.Fody.2.20.0\lib\Anotar.CommonLogging.dll</HintPath>
+      <HintPath>..\packages\Anotar.CommonLogging.Fody.3.0.1\lib\Anotar.CommonLogging.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Common.Logging, Version=3.3.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
